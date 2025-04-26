@@ -130,20 +130,30 @@ class ShippingRateResolver
      */
     public function get(): Collection
     {
-        if (! $this->postcode || ! $this->country) {
+        if (! $this->country) {
             return collect();
         }
 
-        $zones = Shipping::zones()->country(
+        $zoneQuery = Shipping::zones()->country(
             $this->country
-        )->state(
-            State::whereName($this->state)->first()
-        )->postcode(
-            new PostcodeLookup(
-                country: $this->country,
-                postcode: $this->postcode
-            )
-        )->get();
+        );
+
+        if ($this->state) {
+            $zoneQuery->state(
+                State::whereName($this->state)->first()
+            );
+        }
+
+        if ($this->postcode) {
+            $zoneQuery->postcode(
+                new PostcodeLookup(
+                    country: $this->country,
+                    postcode: $this->postcode
+                )
+            );
+        }
+
+        $zones = $zoneQuery->get();
 
         $shippingRates = collect();
 
